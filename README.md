@@ -596,6 +596,6 @@ ORDER BY
 
 Here’s the ERD for the IKEA Retail Sales SQL Project:
 
-![ERD Placeholder](https://github.com/najirh/sql-b01-ikea/blob/main/IKEA.png)
+![ERD Placeholder](https://dochub.com/pravin-giri/mqNjP3BVW1Bx3oNR9yGzLk/erd-diagram-png)
 
 ---
