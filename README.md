@@ -71,11 +71,146 @@ The IKEA Retail Sales SQL Project demonstrates the use of SQL to analyze retail 
 This project tackles the following business problems:
 
 ### Easy-Level Queries
-1. Identify the top 5 best-selling products.
-2. List all products that are low in stock (below the reorder level).
-3. Calculate total sales revenue for each store.
-4. Find the top 3 stores with the highest sales in a specific country.
-5. Retrieve sales data for the last 6 months.
+1. Find the average discount and total revenue generated for each subcategory across all stores.
+```sql
+SELECT 
+p.subcategory,
+ROUND(AVG(s.discount_percentage * 100)::numeric, 2) AS avg_discount,
+ROUND(SUM(s.net_sale)::numeric,2) AS total_revenue
+FROM sales AS s
+INNER JOIN products AS p
+ON p.product_id = s.product_id
+GROUP BY 1
+```
+2. Retrieve the top three products by total sales revenue in each store.
+```sql
+WITH t1
+AS
+(
+SELECT
+s.store_id,
+p.product_id,
+ROUND(SUM(s.net_sale)::NUMERIC, 2) AS total_revenue
+FROM sales AS s
+INNER JOIN products AS p
+ON s.product_id = p.product_id
+GROUP BY 1,2
+)
+SELECT 
+store_id,
+        product_id,
+        total_revenue,
+		DENSE_RANK() OVER (PARTITION BY store_id ORDER BY total_revenue DESC) AS rank
+FROM t1
+limit 3;
+```
+3. Determine the product with the highest number of units sold in each category and store.
+```sql
+WITH t1
+AS
+(
+SELECT 
+st.store_id,
+p.product_id,
+st.store_name,
+p.product_name,
+p.category,
+SUM(net_sale) AS highest_no_units
+FROM sales AS s
+INNER JOIN products AS p
+ON s.product_id = p.product_id
+INNER JOIN stores AS st
+ON s.store_id = st.store_id
+GROUP BY 1,2,3,4,5
+),
+t2
+AS
+(SELECT
+t1.*,
+t1.highest_no_units,
+DENSE_RANK() OVER (PARTITION BY t1.store_id,t1.category ORDER BY highest_no_units DESC) AS top_rank,
+RANK() OVER (PARTITION BY t1.store_id,t1.category ORDER BY highest_no_units DESC) AS top_ranks
+FROM t1
+)
+SELECT 
+t2.category,
+t2.store_name,
+t2.product_name,
+    t2.top_rank,
+    t2.top_ranks
+FROM t2
+WHERE t2.top_rank =1
+ORDER BY t2.store_id, t2.category;
+```
+4. Identify the best selling top 2 category of each month on the qty sold for 2023.
+```sql
+WITH category_sales
+AS
+(
+SELECT 
+TO_CHAR(order_date, 'Month') AS months,
+p.category,
+SUM(qty) AS total_quantity
+FROM sales AS s
+INNER JOIN products AS p
+ON s.product_id = p.product_id
+WHERE 
+     EXTRACT(YEAR FROM s.order_date) = 2023
+GROUP BY 1,2
+),
+category_ranks
+AS
+(SELECT
+*,
+DENSE_RANK() OVER (PARTITION BY months ORDER BY total_quantity DESC) AS ranks
+FROM category_sales)
+SELECT 
+* 
+FROM category_ranks
+WHERE ranks <= 3;
+```
+5. identify the store with decreasing revenue compared to last year.
+```sql
+WITH t1
+AS
+(
+SELECT
+store_id,
+SUM(net_sale) AS last_year_revenue
+FROM sales
+WHERE EXTRACT(YEAR FROM order_date) =2022
+GROUP BY 1),
+t2
+AS
+(SELECT
+store_id,
+SUM(net_sale) AS current_year_revenue
+FROM sales
+WHERE EXTRACT(YEAR FROM order_date) =2023
+GROUP BY 1),
+t3
+AS
+(SELECT 
+t1.store_id,
+last_year_revenue,
+current_year_revenue,
+ROUND((last_year_revenue-current_year_revenue)::numeric/last_year_revenue::numeric*100, 2) AS percentage,
+DENSE_RANK() OVER (ORDER BY t1.store_id) AS ranks
+FROM t1
+JOIN
+t2
+ON t1.store_id = t2.store_id
+WHERE last_year_revenue > current_year_revenue
+ORDER BY 4 DESC)
+SELECT 
+*
+FROM t3
+JOIN stores AS st
+ON t3.store_id=st.store_id
+WHERE ranks <= 5
+ORDER BY percentage DESC;
+```
+
 
 ### Medium to Hard-Level Queries
 1. Determine the product category contributing the most to revenue.
