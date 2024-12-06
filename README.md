@@ -529,6 +529,114 @@ FROM t1
 ORDER BY category, performance_ranks;
 ```
 ---
+### Store Procedures without parameters.
+1. Write a store procedure to find last year sale.
+```sql
+CREATE OR REPLACE PROCEDURE last_year_qty()
+LANGUAGE plpgsql
+AS $$
+
+DECLARE
+v_qty INT;
+
+BEGIN
+
+SELECT
+SUM(qty) AS total_qty
+INTO v_qty
+FROM sales
+WHERE EXTRACT(YEAR FROM order_date)=EXTRACT(YEAR FROM CURRENT_DATE)-1;
+
+RAISE NOTICE 'Hey this is the last year sale %', v_qty;
+
+END;
+$$
+```
+2. write a store procedure to find last year revenue.
+```sql
+CREATE OR REPLACE PROCEDURE last_year_revenue()
+LANGUAGE plpgsql
+AS $$
+
+DECLARE
+v_net_sale INT;
+
+BEGIN
+
+SELECT
+SUM(net_sale) AS total_revenue
+INTO v_net_sale
+FROM sales
+WHERE EXTRACT(YEAR FROM order_date)=2023;
+
+RAISE NOTICE 'This is a last year revenue %',v_net_sale;
+
+END;
+$$
+```
+###Store Procedures with parameters.
+1. Write a stored procedure to check if stock is available in the Inventory table for a specific product. If the stock is available, reduce the quantity from the inventory (sell the product).
+```sql
+CREATE OR REPLACE PROCEDURE add_sale(p_product_id VARCHAR(10),
+                                    p_qty INT,
+								     p_store_id VARCHAR(10),
+									 p_order_id VARCHAR(10)
+						             )
+LANGUAGE plpgsql
+AS $$
+
+DECLARE
+v_count INT;
+v_cs INT;
+v_p_name VARCHAR(30);
+v_price FLOAT;
+
+BEGIN
+--- to check product user want to buy return how many qty
+SELECT 
+COUNT(current_stock)
+INTO v_count  --- 0 OR 1
+FROM inventory
+WHERE product_id = p_product_id
+AND
+current_stock >= p_qty;
+
+---getting current stock avalaible
+SELECT 
+current_stock
+INTO v_cs
+FROM inventory
+WHERE product_id = p_product_id;
+
+--getting product_name
+SELECT
+product_name, 
+unit_pice
+INTO v_p_name, v_price
+FROM products
+WHERE product_id = p_product_id;
+
+
+IF v_count > 0 THEN 
+---add sales record
+INSERT INTO sales (order_id, order_date, product_id, qty, store_id, net_sale)
+VALUES 
+(p_order_id, CURRENT_DATE, p_product_id, p_qty, p_store_id, (p_qty*v_price));
+
+--updating inventory table after sale
+UPDATE inventory
+SET current_stock = (current_syock - p_qty)
+WHERE product_id =p_product_id;
+
+RAISE NOTICE 'Congrats product sold! qty: %, Product_name %', p_qty, v_p_name;
+
+ELSE
+RAISE NOTICE 'Sorry current stock is % for product_name %', v_cs, v_p_name;
+END IF;
+
+END;
+$$
+```
 
 ## SQL Queries & Analysis
 
