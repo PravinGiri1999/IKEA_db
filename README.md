@@ -574,6 +574,8 @@ RAISE NOTICE 'This is a last year revenue %',v_net_sale;
 END;
 $$
 ```
+---
+
 ##Store Procedures with parameters.
 1. Write a stored procedure to check if stock is available in the Inventory table for a specific product. If the stock is available, reduce the quantity from the inventory (sell the product).
 ```sql
@@ -637,6 +639,7 @@ END IF;
 END;
 $$
 ```
+---
 
 ## SQL Queries & Analysis
 
