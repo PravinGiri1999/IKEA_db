@@ -529,7 +529,7 @@ FROM t1
 ORDER BY category, performance_ranks;
 ```
 ---
-### Store Procedures without parameters.
+## Store Procedures without parameters.
 1. Write a store procedure to find last year sale.
 ```sql
 CREATE OR REPLACE PROCEDURE last_year_qty()
@@ -574,7 +574,7 @@ RAISE NOTICE 'This is a last year revenue %',v_net_sale;
 END;
 $$
 ```
-###Store Procedures with parameters.
+##Store Procedures with parameters.
 1. Write a stored procedure to check if stock is available in the Inventory table for a specific product. If the stock is available, reduce the quantity from the inventory (sell the product).
 ```sql
 CREATE OR REPLACE PROCEDURE add_sale(p_product_id VARCHAR(10),
