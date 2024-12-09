@@ -581,9 +581,9 @@ $$
 ```sql
 CREATE OR REPLACE PROCEDURE add_sale(p_product_id VARCHAR(10),
                                     p_qty INT,
-								     p_store_id VARCHAR(10),
-									 p_order_id VARCHAR(10)
-						             )
+                                    p_store_id VARCHAR(10),
+                                    p_order_id VARCHAR(10)
+                                    )
 LANGUAGE plpgsql
 AS $$
 
